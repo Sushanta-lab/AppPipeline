@@ -120,32 +120,36 @@ jobs:
           location: 'us-central1-c'
       # Configure runner with GKE
       # Install chart in DEV Env
-      - name: upgrade chart
-        id: chart-dev
-        working-directory: ./charts
+      - name: upgrade chart spring
+        if: ${{ matrix.path == "spring" }}
+        working-directory: ./charts/spring
         run: |
           #echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
           if [[ ${{ matrix.path }} == "spring" ]]
           then
             echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
             APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.spring_version }}
-            sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" ./spring/values-dev.yaml
-            sed -i -e "s|NAMES|spring|g" ./spring/Chart.yaml
-            sed -i -e "s|APP_VERSION|$APP_VERSION|g" ./spring/Chart.yaml
-            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" ./spring/Chart.yaml
-            sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" ./spring/values-dev.yaml
-            helm upgrade -i spring -f ./spring/values-dev.yaml . --namespace dev
+            sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
+            sed -i -e "s|NAMES|spring|g" Chart.yaml
+            sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
+            helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
           fi
           
+      - name: upgrade chart springapp
+        if: ${{ matrix.path == "springapp" }}
+        working-directory: ./charts/spring
+        run: |
           if [[ ${{ matrix.path }} == "springapp" ]]
           then
             echo ${{ needs.setup-build-publish-deploy.outputs.springapp_version }}
             APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.springapp_version }}
-            sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" ./springapp/values-dev.yaml
-            sed -i -e "s|NAMES|springapp|g" ./springapp/Chart.yaml
-            sed -i -e "s|APP_VERSION|$APP_VERSION|g" ./springapp/Chart.yaml
-            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" ./springapp/Chart.yaml
-            sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" ./springapp/values-dev.yaml
-            helm upgrade -i springapp -f ./springapp/values-dev.yaml . --namespace dev
+            sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
+            sed -i -e "s|NAMES|springapp|g" Chart.yaml
+            sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/springapp|g" values-dev.yaml
+            helm upgrade -i springapp -f ./values-dev.yaml . --namespace dev
           fi
           
