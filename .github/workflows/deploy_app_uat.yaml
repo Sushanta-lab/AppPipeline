@@ -1,0 +1,100 @@
+name: 'APP Deployment UAT'
+on:
+  workflow_dispatch:
+    #inputs:
+    #  APP_VERSION:
+  #push:
+  # pull_request:
+  #   branches:
+  #   - main
+ # /*workflow_run:
+ #   workflows: ["App Deployment on DEV"]
+ #   #workflows: ["build-docker-push"]
+ #   branches: [main]
+ #   types:
+ #    - completed*/
+
+env:
+  GKE_CLUSTER_NAME: "test-uat"
+  GKE_PROJECT: ${{ secrets.GCP_PROJECT }}
+  GKE_REGION: "us-central1-c"
+  ACCOUNT: ${{ secrets.GCP_ACCOUNT }}
+  DOCKER_REGISTRY: gcr.io/${{ secrets.GCP_PROJECT }}
+  DOCKER_UN: ${{ secrets.DOCKER_UN }}
+  DOCKER_PW: ${{ secrets.DOCKER_PWD }}
+  KUBECONFIG: ${{ secrets.KUBECONFIG }}
+
+jobs:
+  generateInputPaths:
+    runs-on: ubuntu-latest
+    #if: ${{ ( github.actor  == 'SushantaSarkar' ) && ( github.event.workflow_run.conclusion == 'success') }}
+    if: ${{ ( github.actor  == 'AshwiniGhanwat' ) && ( github.event.workflow_run.conclusion == 'success') }}
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Generate matrix with all modules of WhatTheHack repository
+      id: set-matrix
+      run: |
+        echo '::set-output name=matrix::["spring"]'
+        
+  get-app-version:
+    uses: ./.github/workflows/deploy_app.yaml
+    
+  deploy-app-on-GKE:
+    name: Deploy
+    needs: ['generateInputPaths', 'get-app-version']
+    #if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    strategy:
+      #fail-fast: false
+      matrix:
+        path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Tags
+        shell: bash
+        run: |
+           echo "***GITHUB_ENV****"
+           echo "$GITHUB_ENV"
+           echo "***GITHUB_ENV****"
+           echo "***GITHUB_ACTOR****"
+           echo "${{ github.actor }}"
+           echo "***GITHUB_ACTOR****"
+      #    version_file="deployment_version.yaml"
+      #    echo "${{ matrix.path }}_version=$(yq -r .${{ matrix.path }}.version ${version_file})" >> $GITHUB_ENV
+      # Install GCP Dependencies
+      - name: cloud-sdk-setup
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GOOGLE_CRED }}
+          export_default_credentials: true
+      - id: 'get-credentials'
+        uses: 'google-github-actions/get-gke-credentials@v1'
+        with:
+          cluster_name: 'test-uat'
+          location: 'us-central1-c'
+      # Configure runner with GKE
+      - name: Configure GKE
+        working-directory: .
+        env:
+          GCLOUD_KEY: ${{ secrets.GOOGLE_CRED }}
+        run: | 
+          gcloud components install kubectl
+          #kubectl create secret docker-registry regsecret --docker-server=$DOCKER_REGISTRY --docker-username=$DOCKER_UN  --docker-password=$DOCKER_PW --namespace=uat
+   
+      # Install chart in UAT Env
+      - name: upgrade chart
+        working-directory: ./charts/spring
+        run: |
+          echo "============== ${{ needs.get-app-version.outputs.app_version }} =========="
+          APP_VERSION=${{ needs.get-app-version.outputs.app_version }}
+          #echo "============== ${${{ matrix.path }}_version} =========="
+          #APP_VERSION=${${{ matrix.path }}_version}
+          sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-uat.yaml
+          sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-uat.yaml
+          helm upgrade -i spring -f ./values-uat.yaml . --namespace uat
