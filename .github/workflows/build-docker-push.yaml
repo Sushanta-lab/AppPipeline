@@ -130,7 +130,7 @@ jobs:
             echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
             APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.spring_version }}
             sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" ./spring/values-dev.yaml
-            sed -i -e "s|NAME|spring|g" ./spring/Chart.yaml
+            sed -i -e "s|NAMES|spring|g" ./spring/Chart.yaml
             sed -i -e "s|APP_VERSION|$APP_VERSION|g" ./spring/Chart.yaml
             sed -i -e "s|CHART_VERSION|$APP_VERSION|g" ./spring/Chart.yaml
             sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" ./spring/values-dev.yaml
@@ -142,7 +142,7 @@ jobs:
             echo ${{ needs.setup-build-publish-deploy.outputs.springapp_version }}
             APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.springapp_version }}
             sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" ./springapp/values-dev.yaml
-            sed -i -e "s|NAME|springapp|g" ./spring/Chart.yaml
+            sed -i -e "s|NAMES|springapp|g" ./spring/Chart.yaml
             sed -i -e "s|APP_VERSION|$APP_VERSION|g" ./springapp/Chart.yaml
             sed -i -e "s|CHART_VERSION|$APP_VERSION|g" ./springapp/Chart.yaml
             sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" ./springapp/values-dev.yaml
