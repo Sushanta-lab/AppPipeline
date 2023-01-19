@@ -19,8 +19,16 @@ env:
   DOCKER_PW: ${{ secrets.DOCKER_PWD }}
 jobs:
   generateInputPaths:
-    name: generateInputPaths
-    uses: ./.github/workflows/generateInputPaths.yaml
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Generate matrix with all modules of WhatTheHack repository
+      id: set-matrix
+      run: |
+        echo '::set-output name=matrix::["spring"]'
+        #echo '::set-output name=matrix::["spring", "grafana"]'
 
   setup-build-publish-deploy:
     name: Setup, Build, Publish, and Deploy
@@ -49,13 +57,71 @@ jobs:
         id: build
         working-directory: ./Dockerfiles
         run: |-
-          #IMAGE_VERSION=${${{ matrix.path }}_version}
-          IMAGE_VERSION=${${{ needs.build-docker-push.outputs.app_version }}}
+          IMAGE_VERSION=${${{ matrix.path }}_version}
           echo $IMAGE_VERSION
-          echo "app_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
       # Push the Docker image to Google Container Registry
       - name: Publish
         run: |-
           IMAGE_VERSION=${${{ matrix.path }}_version}
           docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION
+
+
+  deploy-app-on-GKE-DEV:
+    name: Deploy on Dev
+    needs: generateInputPaths
+    environment: dev
+    runs-on: ubuntu-latest
+    strategy:
+      #fail-fast: false
+      matrix:
+        path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Tags
+        shell: bash
+        run: |
+          version_file="deployment_version.yaml"
+          echo "${{ matrix.path }}_version=$(yq -r .${{ matrix.path }}.version ${version_file})" >> $GITHUB_ENV
+      # Install GCP Dependencies
+      - name: cloud-sdk-setup
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GOOGLE_CRED }}
+          export_default_credentials: true
+      - id: 'get-credentials'
+        uses: 'google-github-actions/get-gke-credentials@v1'
+        with:
+          cluster_name: 'test'
+          location: 'us-central1-c'
+      # Configure runner with GKE
+      - name: Configure GKE
+        working-directory: .
+        env:
+          GCLOUD_KEY: ${{ secrets.GOOGLE_CRED }}
+        run: | 
+          #gcloud components install kubectl
+          
+          #echo "$GCLOUD_KEY" | base64 --decode > ${HOME}/gcloud.json
+          #gcloud auth activate-service-account --key-file=${HOME}/gcloud.json
+          #gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone $GKE_REGION --project $GKE_PROJECT
+          #gcloud container clusters get-credentials test --zone us-central1-c --project copper-stacker-374102
+          
+          #kubectl create ns dev
+          #kubectl create ns uat
+          #kubectl create secret docker-registry regsecret --docker-server=$DOCKER_REGISTRY --docker-username=$DOCKER_UN  --docker-password=$DOCKER_PW --namespace=dev
+          #kubectl create secret docker-registry regsecret --docker-server=$DOCKER_REGISTRY --docker-username=$DOCKER_UN  --docker-password=$DOCKER_PW --namespace=uat
+          
+      # Install chart in DEV Env
+      - name: upgrade chart
+        id: chart-dev
+        working-directory: ./charts/spring
+        run: |
+          APP_VERSION=${${{ matrix.path }}_version}
+          sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
+          sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
+          helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
