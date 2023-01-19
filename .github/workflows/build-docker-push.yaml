@@ -49,7 +49,8 @@ jobs:
         id: build
         working-directory: ./Dockerfiles
         run: |-
-          IMAGE_VERSION=${${{ matrix.path }}_version}
+          #IMAGE_VERSION=${${{ matrix.path }}_version}
+          IMAGE_VERSION=${{ needs.build-docker-push.outputs.app_version }}
           echo $IMAGE_VERSION
           echo "app_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
