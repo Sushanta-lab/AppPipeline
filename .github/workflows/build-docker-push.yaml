@@ -112,6 +112,7 @@ jobs:
         id: chart-dev
         working-directory: ./charts/spring
         run: |
+          echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
           if [[ ${{ matrix.path }} == "spring" ]]
           then
             echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
