@@ -8,9 +8,9 @@ on:
       spring_version:
         description: "The APP VERSION to be deployed"
         value: ${{ jobs.setup-build-publish-deploy.outputs.spring_version }}
-      grafana_version:
+      springapp_version:
         description: "The APP VERSION to be deployed"
-        value: ${{ jobs.setup-build-publish-deploy.outputs.grafana_version }}
+        value: ${{ jobs.setup-build-publish-deploy.outputs.springapp_version }}
       matrix:
         description: "App_NAME"
         value: ${{ jobs.generateInputPaths.outputs.matrix }}
@@ -33,7 +33,7 @@ jobs:
       id: set-matrix
       run: |
         #echo '::set-output name=matrix::["spring"]'
-        echo '::set-output name=matrix::["spring", "grafana"]'
+        echo '::set-output name=matrix::["spring", "springapp"]'
 
       
   setup-build-publish-deploy:
@@ -47,7 +47,7 @@ jobs:
         path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
     outputs:
       spring_version: ${{ steps.build.outputs.spring_version }}
-      grafana_version: ${{ steps.build.outputs.grafana_version }}
+      springapp_version: ${{ steps.build.outputs.springapp_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -62,8 +62,12 @@ jobs:
         run: |-
           docker login $DOCKER_REGISTRY --username $DOCKER_UN --password $DOCKER_PW
       # Replace value in Dockerfile
-      - name: Replace Values
+      - name: Replace Values spring
         working-directory: ./Dockerfiles/spring
+        run: |
+          sed -i -e "s|DOCKER_REGISTRY|$DOCKER_REGISTRY|g" Dockerfile
+      - name: Replace Values springapp
+        working-directory: ./Dockerfiles/springapp
         run: |
           sed -i -e "s|DOCKER_REGISTRY|$DOCKER_REGISTRY|g" Dockerfile
       # Build Docker Image
@@ -77,9 +81,9 @@ jobs:
           then
             echo "spring_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           fi
-          if [[ ${{ matrix.path }} == "grafana" ]]
+          if [[ ${{ matrix.path }} == "springapp" ]]
           then
-            echo "grafana_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
+            echo "springapp_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           fi
           
           docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
@@ -118,17 +122,28 @@ jobs:
       # Install chart in DEV Env
       - name: upgrade chart
         id: chart-dev
-        working-directory: ./charts/spring
+        working-directory: ./charts
         run: |
-          echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
+          #echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
           if [[ ${{ matrix.path }} == "spring" ]]
           then
             echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
             APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.spring_version }}
-            sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
-            sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
-            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
-            sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
+            sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" ./spring/values-dev.yaml
+            sed -i -e "s|APP_VERSION|$APP_VERSION|g" ./spring/Chart.yaml
+            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" ./spring/Chart.yaml
+            sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" ./spring/values-dev.yaml
             helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
+          fi
+          
+          if [[ ${{ matrix.path }} == "springapp" ]]
+          then
+            echo ${{ needs.setup-build-publish-deploy.outputs.springapp_version }}
+            APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.springapp_version }}
+            sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" ./springapp/values-dev.yaml
+            sed -i -e "s|APP_VERSION|$APP_VERSION|g" ./springapp/Chart.yaml
+            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" ./springapp/Chart.yaml
+            sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" ./springapp/values-dev.yaml
+            helm upgrade -i springapp -f ./values-dev.yaml . --namespace dev
           fi
           
