@@ -71,6 +71,8 @@ jobs:
         id: build
         working-directory: ./Dockerfiles
         run: |-
+          IMAGE_VERSION=${${{ matrix.path }}_version}
+          echo $IMAGE_VERSION
           if [[ ${{ matrix.path }} == "spring" ]]
           then
             echo "spring_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
@@ -79,8 +81,7 @@ jobs:
           then
             echo "grafana_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           fi
-          IMAGE_VERSION=${${{ matrix.path }}_version}
-          echo $IMAGE_VERSION
+          
           docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
       # Push the Docker image to Google Container Registry
       - name: Publish
