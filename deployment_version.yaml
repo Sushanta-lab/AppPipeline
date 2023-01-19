@@ -1,6 +1,6 @@
 spring:
   version: 1.0.1
-grafana:
+springapp:
   version: 1.0.0
 prometheus:
   version: 1.0.0
