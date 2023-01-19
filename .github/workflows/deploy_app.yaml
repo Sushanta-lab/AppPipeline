@@ -97,7 +97,9 @@ jobs:
         id: chart-dev
         working-directory: ./charts/spring
         run: |
-          APP_VERSION=${${{ matrix.path }}_version}
+          #APP_VERSION=${${{ matrix.path }}_version}
+          echo "============== ${{ needs.build-docker-push.outputs.app_version }} =========="
+          APP_VERSION=${{ needs.build-docker-push.outputs.app_version }}
           #echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
           #echo '::set-output app_version=app_version::["$APP_VERSION"]'
           sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
