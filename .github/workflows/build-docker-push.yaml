@@ -152,7 +152,7 @@ jobs:
           
   deploy-app-on-GKE-UAT:
     name: Deploy on UAT
-    needs: ['generateInputPaths', 'setup-build-publish-deploy']
+    needs: ['generateInputPaths', 'setup-build-publish-deploy', 'deploy-app-on-GKE-DEV']
     environment: uat
     runs-on: ubuntu-latest
     strategy:
