@@ -106,7 +106,7 @@ jobs:
         id: chart-dev
         working-directory: ./charts/spring
         run: |
-          echo "${${{ matrix.path }}_version}"
+          echo "${spring_version}"
           APP_VERSION=${${{ matrix.path }}_version}
           sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
           sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
