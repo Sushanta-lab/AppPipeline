@@ -46,8 +46,7 @@ jobs:
       # Login to GCR
       - name: Login to GCR
         run: |-
-          docker login $DOCKER_REGISTRY --username $DOCKER_UN --password $DOCKER_PW
-          
+          docker login $DOCKER_REGISTRY --username $DOCKER_UN --password $DOCKER_PW          
       # Replace value in Dockerfile
       - name: Replace Values
         working-directory: ./Dockerfiles/spring
