@@ -124,7 +124,7 @@ jobs:
         working-directory: ./charts
         run: |
           #echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
-          FILE_PATH=$pwd
+          FILE_PATH=$(pwd)
           echo $FILE_PATH
           if [[ ${{ matrix.path }} == "spring" ]]
           then
