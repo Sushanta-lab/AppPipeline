@@ -75,3 +75,41 @@ jobs:
         run: |-
           IMAGE_VERSION=${${{ matrix.path }}_version}
           docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION
+
+
+  deploy-app-on-GKE-DEV:
+    name: Deploy on Dev
+    needs: ['generateInputPaths', 'setup-build-publish-deploy']
+    environment: dev
+    runs-on: ubuntu-latest
+    strategy:
+      #fail-fast: false
+      matrix:
+        path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # Install GCP Dependencies
+      - name: cloud-sdk-setup
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GOOGLE_CRED }}
+          export_default_credentials: true
+      - id: 'get-credentials'
+        uses: 'google-github-actions/get-gke-credentials@v1'
+        with:
+          cluster_name: 'test'
+          location: 'us-central1-c'
+      # Configure runner with GKE
+      # Install chart in DEV Env
+      - name: upgrade chart
+        id: chart-dev
+        working-directory: ./charts/spring
+        run: |
+          APP_VERSION=${${{ matrix.path }}_version}
+          sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
+          sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
+          helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
