@@ -46,9 +46,8 @@ jobs:
       matrix:
         path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
     outputs:
-      #spring_version: ${{ steps.Tags.outputs.spring_version }}
-      #grafana_version: ${{ steps.Tags.outputs.grafana_version }}
-      ${{ matrix.path }}_version: ${{ steps.Tags.outputs.${{ matrix.path }}_version }}
+      spring_version: ${{ steps.Tags.outputs.spring_version }}
+      grafana_version: ${{ steps.Tags.outputs.grafana_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -111,13 +110,16 @@ jobs:
       # Install chart in DEV Env
       - name: upgrade chart
         id: chart-dev
-        if: ${{ matrix.path == "spring" }}
         working-directory: ./charts/spring
         run: |
-          echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
-          APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.spring_version }}
-          sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
-          sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
-          sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
-          sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
-          helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
+          if [[ ${{ matrix.path }} == "spring" ]]
+          then
+            echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
+            APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.spring_version }}
+            sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
+            sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
+            helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
+          fi
+          
