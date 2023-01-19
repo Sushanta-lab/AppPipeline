@@ -29,8 +29,8 @@ jobs:
     - name: Generate matrix with all modules of WhatTheHack repository
       id: set-matrix
       run: |
-        echo '::set-output name=matrix::["spring"]'
-        #echo '::set-output name=matrix::["spring", "grafana"]'
+        #echo '::set-output name=matrix::["spring"]'
+        echo '::set-output name=matrix::["spring", "grafana"]'
 
       
   setup-build-publish-deploy:
@@ -80,7 +80,7 @@ jobs:
   deploy-app-on-GKE-DEV:
     name: Deploy on Dev
     needs: ['generateInputPaths', 'setup-build-publish-deploy']
-    #environment: dev
+    environment: dev
     runs-on: ubuntu-latest
     strategy:
       #fail-fast: false
@@ -108,7 +108,7 @@ jobs:
         working-directory: ./charts/spring
         run: |
           echo ${{ needs.setup-build-publish-deploy.outputs.app_version }}
-          APP_VERSION=${${{ matrix.path }}_version}
+          APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.app_version }}
           sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
           sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
           sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
