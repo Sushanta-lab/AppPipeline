@@ -1,15 +1,15 @@
 name: 'APP Deployment on DEV'
 #on: [workflow_dispatch]
 on:
-  push:
+  #push:
    #pull_request:
     # branches:
     # - main
-  #workflow_run:
-  #  workflows: ["build-docker-push"]
-  #  branches: [main]
-  #  types:
-  #    - completed
+  workflow_run:
+    workflows: ["build-docker-push"]
+    branches: [main]
+    types:
+      - completed
   workflow_call:
     # Map the workflow outputs to job outputs
     #outputs:
@@ -39,21 +39,22 @@ jobs:
   #    run: |
   #      echo '::set-output name=matrix::["spring"]'
   
-  build-docker-push:
-     name: build-docker-image
-     uses: ./.github/workflows/build-docker-push.yaml
+  generateInputPaths:
+    name: generateInputPaths
+    uses: ./.github/workflows/generateInputPaths.yaml
         
   deploy-app-on-GKE-DEV:
     name: Deploy on Dev
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    needs: build-docker-push
+    needs: generateInputPaths
+    environment: dev
     runs-on: ubuntu-latest
     #outputs:
     #  app_version: ${{ steps.chart-dev.outputs.app_version }}
-    #strategy:
+    strategy:
       #fail-fast: false
-      #matrix:
-      #  path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
+      matrix:
+        path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -96,11 +97,9 @@ jobs:
         id: chart-dev
         working-directory: ./charts/spring
         run: |
-          #APP_VERSION=${${{ matrix.path }}_version}
+          APP_VERSION=${${{ matrix.path }}_version}
           #echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
           #echo '::set-output app_version=app_version::["$APP_VERSION"]'
-          echo "============== ${{ needs.build-docker-push.outputs.app_version }} =========="
-          APP_VERSION=${{ needs.build-docker-push.outputs.app_version }}
           sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
           sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
           sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
