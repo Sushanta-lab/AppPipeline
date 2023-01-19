@@ -5,9 +5,12 @@ on:
   workflow_call:
     # Map the workflow outputs to job outputs
     outputs:
-      app_version:
+      spring_version:
         description: "The APP VERSION to be deployed"
-        value: ${{ jobs.setup-build-publish-deploy.outputs.app_version }}
+        value: ${{ jobs.setup-build-publish-deploy.outputs.spring_version }}
+      grafana_version:
+        description: "The APP VERSION to be deployed"
+        value: ${{ jobs.setup-build-publish-deploy.outputs.grafana_version }}
       matrix:
         description: "App_NAME"
         value: ${{ jobs.generateInputPaths.outputs.matrix }}
@@ -37,12 +40,15 @@ jobs:
     name: Setup, Build, Publish, and Deploy
     needs: generateInputPaths
     runs-on: ubuntu-latest
-    outputs:
-      app_version: ${{ steps.build.outputs.app_version }}
+    
     strategy:
       #fail-fast: false
       matrix:
         path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
+    outputs:
+      #spring_version: ${{ steps.Tags.outputs.spring_version }}
+      #grafana_version: ${{ steps.Tags.outputs.grafana_version }}
+      ${{ matrix.path }}_version: ${{ steps.Tags.outputs.${{ matrix.path }}_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -52,6 +58,7 @@ jobs:
           version_file="deployment_version.yaml"
           echo "${{ matrix.path }}_version=$(yq -r .${{ matrix.path }}.version ${version_file})" >> $GITHUB_ENV
           #echo "SPRING_APP_VERSION=$(yq -r .spingjar.version ${version_file})" >> $GITHUB_ENV
+          echo "${{ matrix.path }}_version=$(yq -r .${{ matrix.path }}.version ${version_file})" >> $GITHUB_OUTPUT
       # Login to GCR
       - name: Login to GCR
         run: |-
@@ -68,7 +75,6 @@ jobs:
         run: |-
           IMAGE_VERSION=${${{ matrix.path }}_version}
           echo $IMAGE_VERSION
-          echo "app_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
       # Push the Docker image to Google Container Registry
       - name: Publish
@@ -105,10 +111,11 @@ jobs:
       # Install chart in DEV Env
       - name: upgrade chart
         id: chart-dev
+        if: ${{ matrix.path == "spring" }}
         working-directory: ./charts/spring
         run: |
-          echo ${{ needs.setup-build-publish-deploy.outputs.app_version }}
-          APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.app_version }}
+          echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
+          APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.spring_version }}
           sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
           sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
           sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
