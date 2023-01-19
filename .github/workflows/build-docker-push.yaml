@@ -97,7 +97,7 @@ jobs:
   deploy-app-on-GKE-DEV:
     name: Deploy on Dev
     needs: ['generateInputPaths', 'setup-build-publish-deploy']
-    environment: dev
+    #environment: dev
     runs-on: ubuntu-latest
     strategy:
       #fail-fast: false
@@ -121,10 +121,10 @@ jobs:
       # Configure runner with GKE
       # Install chart in DEV Env
       - name: upgrade chart spring
-        if: ${{ matrix.path == "spring" }}
-        working-directory: ./charts/spring
+        working-directory: ./charts
         run: |
           #echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
+          FILE_PATH=$pwd
           if [[ ${{ matrix.path }} == "spring" ]]
           then
             echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
@@ -137,10 +137,6 @@ jobs:
             helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
           fi
           
-      - name: upgrade chart springapp
-        if: ${{ matrix.path == "springapp" }}
-        working-directory: ./charts/spring
-        run: |
           if [[ ${{ matrix.path }} == "springapp" ]]
           then
             echo ${{ needs.setup-build-publish-deploy.outputs.springapp_version }}
