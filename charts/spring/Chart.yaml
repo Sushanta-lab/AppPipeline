@@ -1,5 +1,5 @@
 apiVersion: v2
-name: NAME
+name: NAMES
 description: A Helm chart for Kubernetes
 type: application
 version: APP_VERSION
