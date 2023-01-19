@@ -1,6 +1,6 @@
-name: build-docker-push
+name: build-docker-push-
 on: 
-  push:
+  #push:
   workflow_call:
     # Map the workflow outputs to job outputs
     outputs:
