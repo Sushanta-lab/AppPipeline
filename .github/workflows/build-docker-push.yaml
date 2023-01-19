@@ -97,7 +97,7 @@ jobs:
   deploy-app-on-GKE-DEV:
     name: Deploy on Dev
     needs: ['generateInputPaths', 'setup-build-publish-deploy']
-    #environment: dev
+    environment: dev
     runs-on: ubuntu-latest
     strategy:
       #fail-fast: false
@@ -150,3 +150,58 @@ jobs:
             helm upgrade -i springapp -f ./values-dev.yaml . --namespace dev
           fi
           
+  deploy-app-on-GKE-UAT:
+    name: Deploy on UAT
+    needs: ['generateInputPaths', 'setup-build-publish-deploy']
+    environment: uat
+    runs-on: ubuntu-latest
+    strategy:
+      #fail-fast: false
+      matrix:
+        path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # Install GCP Dependencies
+      - name: cloud-sdk-setup
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GOOGLE_CRED }}
+          export_default_credentials: true
+      - id: 'get-credentials'
+        uses: 'google-github-actions/get-gke-credentials@v1'
+        with:
+          cluster_name: 'test-uat'
+          location: 'us-central1-c'
+      # Configure runner with GKE
+      # Install chart in UAT Env
+      - name: upgrade chart spring
+        working-directory: ./charts
+        run: |
+          #echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
+          if [[ ${{ matrix.path }} == "spring" ]]
+          then
+            cd spring/
+            echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
+            APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.spring_version }}
+            sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-uat.yaml
+            sed -i -e "s|NAMES|spring|g" Chart.yaml
+            sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-uat.yaml
+            helm upgrade -i spring -f ./values-uat.yaml . --namespace uat
+          fi
+          
+          if [[ ${{ matrix.path }} == "springapp" ]]
+          then
+            cd springapp/
+            echo ${{ needs.setup-build-publish-deploy.outputs.springapp_version }}
+            APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.springapp_version }}
+            sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-uat.yaml
+            sed -i -e "s|NAMES|springapp|g" Chart.yaml
+            sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/springapp|g" values-uat.yaml
+            helm upgrade -i springapp -f ./values-uat.yaml . --namespace uat
+          fi
