@@ -1,0 +1,6 @@
+apiVersion: v2
+name: springapp
+description: A Helm chart for Kubernetes
+type: application
+version: APP_VERSION
+appVersion: CHART_VERSION

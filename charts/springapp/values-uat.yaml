@@ -5,7 +5,7 @@
 replicaCount: 1
 
 profiles:
-  active: dev
+  active: uat
 
 image:
   repository: IMAGE_NAME
