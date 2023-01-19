@@ -29,8 +29,8 @@ jobs:
     - name: Generate matrix with all modules of WhatTheHack repository
       id: set-matrix
       run: |
-        #echo '::set-output name=matrix::["spring"]'
-        echo '::set-output name=matrix::["spring", "grafana"]'
+        echo '::set-output name=matrix::["spring"]'
+        #echo '::set-output name=matrix::["spring", "grafana"]'
 
       
   setup-build-publish-deploy:
@@ -68,7 +68,6 @@ jobs:
         run: |-
           IMAGE_VERSION=${${{ matrix.path }}_version}
           echo $IMAGE_VERSION
-          echo "app_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
       # Push the Docker image to Google Container Registry
       - name: Publish
@@ -107,6 +106,7 @@ jobs:
         id: chart-dev
         working-directory: ./charts/spring
         run: |
+          echo "${${{ matrix.path }}_version}"
           APP_VERSION=${${{ matrix.path }}_version}
           sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
           sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
