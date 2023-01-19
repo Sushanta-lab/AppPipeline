@@ -69,7 +69,7 @@ jobs:
 
   deploy-app-on-GKE-DEV:
     name: Deploy on Dev
-    needs: generateInputPaths
+    needs: ['generateInputPaths', 'setup-build-publish-deploy']
     environment: dev
     runs-on: ubuntu-latest
     strategy:
