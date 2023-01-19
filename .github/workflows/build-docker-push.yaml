@@ -135,7 +135,7 @@ jobs:
             sed -i -e "s|APP_VERSION|$APP_VERSION|g" $FILE_PATH/spring/Chart.yaml
             sed -i -e "s|CHART_VERSION|$APP_VERSION|g" $FILE_PATH/spring/Chart.yaml
             sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" $FILE_PATH/spring/values-dev.yaml
-            helm upgrade -i spring -f ./$FILE_PATH/spring/values-dev.yaml . --namespace dev
+            helm upgrade -i spring -f ./spring/values-dev.yaml . --namespace dev
           fi
           
           if [[ ${{ matrix.path }} == "springapp" ]]
@@ -147,6 +147,6 @@ jobs:
             sed -i -e "s|APP_VERSION|$APP_VERSION|g" $FILE_PATH/springapp/Chart.yaml
             sed -i -e "s|CHART_VERSION|$APP_VERSION|g" $FILE_PATH/springapp/Chart.yaml
             sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/springapp|g" $FILE_PATH/springapp/values-dev.yaml
-            helm upgrade -i springapp -f ./$FILE_PATH/springapp/values-dev.yaml . --namespace dev
+            helm upgrade -i springapp -f ./springapp/values-dev.yaml . --namespace dev
           fi
           
