@@ -43,10 +43,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Tags
+        shell: bash
+        run: |
+          version_file="deployment_version.yaml"
+          echo "${{ matrix.path }}_version=$(yq -r .${{ matrix.path }}.version ${version_file})" >> $GITHUB_ENV
+          #echo "SPRING_APP_VERSION=$(yq -r .spingjar.version ${version_file})" >> $GITHUB_ENV
       # Login to GCR
       - name: Login to GCR
         run: |-
-          docker login $DOCKER_REGISTRY --username $DOCKER_UN --password $DOCKER_PW          
+          docker login $DOCKER_REGISTRY --username $DOCKER_UN --password $DOCKER_PW
       # Replace value in Dockerfile
       - name: Replace Values
         working-directory: ./Dockerfiles/spring
@@ -59,6 +65,7 @@ jobs:
         run: |-
           IMAGE_VERSION=${${{ matrix.path }}_version}
           echo $IMAGE_VERSION
+          echo "app_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
       # Push the Docker image to Google Container Registry
       - name: Publish
@@ -79,11 +86,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Tags
-        shell: bash
-        run: |
-          version_file="deployment_version.yaml"
-          echo "${{ matrix.path }}_version=$(yq -r .${{ matrix.path }}.version ${version_file})" >> $GITHUB_ENV
       # Install GCP Dependencies
       - name: cloud-sdk-setup
         uses: google-github-actions/setup-gcloud@v0
