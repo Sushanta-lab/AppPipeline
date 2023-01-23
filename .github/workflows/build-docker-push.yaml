@@ -3,6 +3,13 @@ on:
   #push:
   workflow_dispatch:
     inputs:
+      release_type:
+        type: choice
+        description: Select major,minor or patch
+        options:
+        - major
+        - minor
+        - patch
       name:
         type: multi-choice
         description: Select service
@@ -83,7 +90,7 @@ jobs:
       # Login to GCR
       - name: Login to GCR
         run: |-
-          docker login $DOCKER_REGISTRY --username $DOCKER_UN --password $DOCKER_PW
+          ##docker login $DOCKER_REGISTRY --username $DOCKER_UN --password $DOCKER_PW
       # Replace value in Dockerfile
       - name: Replace Values spring
         working-directory: ./Dockerfiles/spring
@@ -109,18 +116,18 @@ jobs:
             echo "springapp_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           fi
           
-          docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
+          ##docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
       # Push the Docker image to Google Container Registry
       - name: Publish
         run: |-
           IMAGE_VERSION=${${{ matrix.path }}_version}
-          docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION
-
+          ##docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION
+          
 
   deploy-app-on-GKE-DEV:
     name: Deploy on Dev
     needs: ['generateInputPaths', 'setup-build-publish-deploy']
-    environment: dev
+    #environment: dev
     runs-on: ubuntu-latest
     strategy:
       #fail-fast: false
@@ -129,6 +136,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      # Check deployed version
+      - name: Current deployed version on DEV
+        shell: bash
+        run: |
+          version_file=./.github/variables/myvars.env
+          echo "PREV_CHART_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> $GITHUB_ENV
+          echo "release=${{ github.event.inputs.release_type }}"
+          if [[ $release == "major" ]]
+          then
+            $rel = 0
+          fi
+          if [[ $release == "minor" ]]
+          then
+            $rel = 1
+          fi
+          if [[ $release == "patch" ]]
+          then
+            $rel = 2
+          fi
+          local delimiter=.
+          local array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
+          array[$rel]=$((array[$rel]+1))
+          if [ $rel -lt 2 ]; then array[2]=0; fi
+          if [ $rel -lt 1 ]; then array[1]=0; fi
+          echo $(local IFS=$delimiter ; echo "${array[*]}")
       # Install GCP Dependencies
       - name: cloud-sdk-setup
         uses: google-github-actions/setup-gcloud@v0
@@ -155,7 +187,7 @@ jobs:
             sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
             sed -i -e "s|NAMES|spring|g" Chart.yaml
             sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
-            sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+            sed -i -e "s|CHART_VERSION|$CHART_VERSION|g" Chart.yaml
             sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
             helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
           fi
