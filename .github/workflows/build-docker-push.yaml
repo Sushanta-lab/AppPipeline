@@ -145,13 +145,13 @@ jobs:
           echo "-----------"
           echo "release=${{ github.event.inputs.release_type }}"
           echo "-----------"
-          echo $release
+          echo "$release"
           echo "-----------*********"
           if [[ $release == "major" ]]
           then
             echo "rel=0"
           fi
-          if [[ $release == "minor" ]]
+          if [[ "$release" == "minor" ]]
           then
             echo "rel=1"
           fi
