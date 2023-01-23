@@ -155,12 +155,8 @@ jobs:
           then
             $rel = 2
           fi
-          local delimiter=.
-          local array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
-          array[$rel]=$((array[$rel]+1))
-          if [ $rel -lt 2 ]; then array[2]=0; fi
-          if [ $rel -lt 1 ]; then array[1]=0; fi
-          echo $(local IFS=$delimiter ; echo "${array[*]}")
+          chmod +x PATH/increment.sh
+          ./PATH/increment.sh increment_version PREV_CHART_VERSION $rel
       # Install GCP Dependencies
       - name: cloud-sdk-setup
         uses: google-github-actions/setup-gcloud@v0
