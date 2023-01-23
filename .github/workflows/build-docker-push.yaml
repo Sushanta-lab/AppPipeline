@@ -166,7 +166,7 @@ jobs:
           echo "*****${array[rel]}*******"
           if [ $rel -lt 2 ]; then array[2]=0; fi
           if [ $rel -lt 1 ]; then array[1]=0; fi
-          echo $( IFS=$delimiter ; echo "${{array[*]}}")
+          echo $( IFS=$delimiter ; echo "${array[*]}")
       # Install GCP Dependencies
       - name: cloud-sdk-setup
         uses: google-github-actions/setup-gcloud@v0
