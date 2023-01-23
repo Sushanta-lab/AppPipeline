@@ -145,17 +145,16 @@ jobs:
           echo "release=${{ github.event.inputs.release_type }}"
           if [[ $release == "major" ]]
           then
-            rel=0
+            echo "rel=0"
           fi
           if [[ $release == "minor" ]]
           then
-            rel=1
+            echo "rel=1"
           fi
           if [[ $release == "patch" ]]
           then
-            rel=2
+            echo "rel=2"
           fi
-          echo "$rel"
           delimiter=.
           array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
           echo "-----------"
