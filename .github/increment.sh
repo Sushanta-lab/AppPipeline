@@ -12,3 +12,5 @@ increment_version() {
   if [ $2 -lt 1 ]; then array[1]=0; fi
   echo $(local IFS=$delimiter ; echo "${array[*]}")
 }
+
+increment_version $1 $2
