@@ -62,8 +62,8 @@ jobs:
     - name: Generate matrix with all modules of WhatTheHack repository
       id: set-matrix
       run: |
-        echo '::set-output name=matrix::["spring"]'
-        #echo '::set-output name=matrix::["spring", "springapp"]'
+        #echo '::set-output name=matrix::["spring"]'
+        echo '::set-output name=matrix::["spring", "springapp"]'
 
       
   setup-build-publish-deploy:
