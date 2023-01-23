@@ -158,7 +158,7 @@ jobs:
           delimiter=.
           array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
           echo "-----------"
-          array[$rel]=$((array[$rel]+1))
+          array[rel]=$((array[rel]+1))
           echo "************"
           if [ $rel -lt 2 ]; then array[2]=0; fi
           if [ $rel -lt 1 ]; then array[1]=0; fi
