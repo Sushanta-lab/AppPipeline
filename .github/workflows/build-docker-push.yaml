@@ -143,6 +143,7 @@ jobs:
           version_file=./.github/variables/myvars.env
           echo "PREV_CHART_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> $GITHUB_ENV
           echo "release=${{ github.event.inputs.release_type }}"
+          echo $release
           if [[ $release == "major" ]]
           then
             echo "rel=0"
