@@ -155,8 +155,8 @@ jobs:
           then
             $rel = 2
           fi
-          chmod +x PATH/increment.sh
-          ./PATH/increment.sh increment_version PREV_CHART_VERSION $rel
+          chmod +x ./.github/increment.sh
+          ./.github/increment.sh increment_version PREV_CHART_VERSION $rel
       # Install GCP Dependencies
       - name: cloud-sdk-setup
         uses: google-github-actions/setup-gcloud@v0
