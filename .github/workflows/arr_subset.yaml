@@ -6,13 +6,16 @@ on:
       name:
         description: provide all service to be deployed in stringified format
         required: true
-        default: "app1,app2,app3,app4"
+        default: "app1","app2","app3","app4"
   workflow_call:
     # Map the workflow outputs to job outputs
     outputs:
       check_status:
         description: "The APP VERSION to be deployed"
         value: ${{ jobs.checkInputs.outputs.check }}
+      app_name:
+        description: "The APP VERSION to be deployed"
+        value: ${{ jobs.checkInputs.outputs.app_name }}
         
 env:
   DOCKER_REGISTRY: gcr.io/${{ secrets.GCP_PROJECT }}
@@ -24,14 +27,16 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       check: ${{ steps.app_name.outputs.check }}
+      #app_name: ${{ steps.app_name.outputs.app_name }}
     steps:
     - uses: actions/checkout@v2
     - name: Check Input app names exists
       id: app_name
       run: |
         apps="${{ github.event.inputs.name }}"
+        app_name=()
         delimiter=,
-        a=(app1 app2 app3 app4 app5 app6 app7 app8 app9 app10)
+        a=("app1" "app2" "app3" "app4" "app5" "app6" "app7" "app8" "app9" "app10")
         b=($(echo "$apps" | tr $delimiter '\n'))
         len=${#b[@]}
         check="ok"
@@ -40,10 +45,12 @@ jobs:
             if printf '%s\0' "${a[@]}" | grep -Fqxz "${b[$i]}"
             then
                 echo "check=ok" >> $GITHUB_OUTPUT
+                #app_name+=( "${b[$i]" )
             else
                 echo "check=notok" >> $GITHUB_OUTPUT
                 break
             fi
+            #echo "app_name=$app_name" >> $GITHUB_OUTPUT
           done
           
   generateInputPaths:
