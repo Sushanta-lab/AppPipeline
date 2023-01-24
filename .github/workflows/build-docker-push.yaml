@@ -144,7 +144,8 @@ jobs:
           version_file="deployment_version.yaml"
           echo "PREV_CHART_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> $GITHUB_ENV
           release="${{ github.event.inputs.release_type }}"
-          echo "${PREV_CHART_VERSION}"
+          CV=${PREV_CHART_VERSION}
+          echo $CV
           echo "$release"
           if [[ $release == "major" ]]
           then
