@@ -124,9 +124,7 @@ jobs:
       # Check deployed version
       - name: Get Current deployed version on DEV
         shell: bash
-        run: |
-          #version_file="deployment_version.yaml"
-          #echo "${{ matrix.path }}_version=$(yq -r .${{ matrix.path }}.version ${version_file})" >> $GITHUB_ENV
+        run: |  
           version_file="deployment_version.yaml"
           echo "${{ matrix.path }}_prev_version=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> $GITHUB_ENV
       # New version to be deployed
@@ -150,15 +148,12 @@ jobs:
             rel="2"
           fi
           delimiter=.
-          echo "$PREV_CHART_VERSION" | tr $delimiter '\n'
           array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
-          echo $array
           array[rel]=$((array[rel]+1))
-          echo "${array[*]}"
           if [ $rel -lt 2 ]; then array[2]=0; fi
           if [ $rel -lt 1 ]; then array[1]=0; fi
-          echo $( IFS=$delimiter ; echo "${array[*]}")
-          echo "$(array[*])"
+          NEW_VERSION=$( IFS=$delimiter ; echo "${array[*]}")
+          echo ${NEW_VERSION}
       # Install GCP Dependencies
       #- name: cloud-sdk-setup
       #  uses: google-github-actions/setup-gcloud@v0
