@@ -12,10 +12,9 @@ on:
         - patch
         default: patch
       name:
-        type: multi-choice
-        description: Select service
-        options: 
-        - spring
+        description: provide all service to be deployed in stringified format
+        required: true
+        default: "['ubuntu-latest','windows-latest']"
         
   workflow_call:
     # Map the workflow outputs to job outputs
