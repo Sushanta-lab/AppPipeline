@@ -6,7 +6,7 @@ on:
       name:
         description: provide all service to be deployed in stringified format
         required: true
-        default: "app1","app2","app3","app4"
+        default: '"app1","app2","app3","app4"'
   workflow_call:
     # Map the workflow outputs to job outputs
     outputs:
