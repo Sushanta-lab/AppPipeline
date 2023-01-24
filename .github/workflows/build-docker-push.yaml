@@ -168,7 +168,7 @@ jobs:
           if [ $rel -lt 1 ]; then array[1]=0; fi
           VER="$( IFS=$delimiter ; echo "${array[*]}")"
           echo "$VER"
-          echo "${array[*]}"
+          echo "$(array[*])"
       # Install GCP Dependencies
       - name: cloud-sdk-setup
         uses: google-github-actions/setup-gcloud@v0
