@@ -158,12 +158,12 @@ jobs:
           fi
           delimiter=.
           array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
+          echo ${array[*]}
           array[rel]=$((array[rel]+1))
           echo "${array[*]}"
           if [ $rel -lt 2 ]; then array[2]=0; fi
           if [ $rel -lt 1 ]; then array[1]=0; fi
-          VER="$( IFS=$delimiter ; echo "${array[*]}")"
-          echo "$VER"
+          echo $( IFS=$delimiter ; echo "${array[*]}")
           echo "$(array[*])"
       # Install GCP Dependencies
       - name: cloud-sdk-setup
