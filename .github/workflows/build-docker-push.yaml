@@ -16,23 +16,7 @@ on:
         description: Select service
         options: 
         - spring
-        - springapp
-        - app1
-        - app2
-        - app3
-        - app4
-        - app5
-        - app6
-        - app7
-        - app8
-        - app9
-        - app10
-        - app11
-        - app12
-        - app13
-        - app14
-        - app15
-        - app16
+        
   workflow_call:
     # Map the workflow outputs to job outputs
     outputs:
@@ -138,14 +122,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       # Check deployed version
-      - name: Current deployed version on DEV
+      - name: Get Current deployed version on DEV
         shell: bash
         run: |
+          #version_file="deployment_version.yaml"
+          #echo "${{ matrix.path }}_version=$(yq -r .${{ matrix.path }}.version ${version_file})" >> $GITHUB_ENV
           version_file="deployment_version.yaml"
-          echo "PREV_CHART_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> $GITHUB_ENV
+          echo "${{ matrix.path }}_prev_version=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> $GITHUB_ENV
+      # New version to be deployed
+      - name: New version on DEV
+        shell: bash
+        run: |
           release="${{ github.event.inputs.release_type }}"
-          CV=${PREV_CHART_VERSION}
-          echo $CV
+          PREV_CHART_VERSION=${${{ matrix.path }}_prev_version}
+          echo ${PREV_CHART_VERSION}
           echo "$release"
           if [[ $release == "major" ]]
           then
