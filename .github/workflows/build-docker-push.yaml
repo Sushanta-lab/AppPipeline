@@ -141,10 +141,12 @@ jobs:
         shell: bash
         run: |
           version_file="deployment_version.yaml"
+          version_file="deployment_version.yaml"
+          echo "${{ matrix.path }}_version=$(yq -r .${{ matrix.path }}.version ${version_file})" >> $GITHUB_ENV
           echo "PREV_CHART_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> $GITHUB_ENV
           release="${{ github.event.inputs.release_type }}"
+          echo "${PREV_CHART_VERSION}"
           echo "$release"
-          echo "$PREV_CHART_VERSION"
           if [[ $release == "major" ]]
           then
             rel="0"
