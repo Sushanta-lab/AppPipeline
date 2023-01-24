@@ -140,7 +140,7 @@ jobs:
       - name: Current deployed version on DEV
         shell: bash
         run: |
-          version_file=./.github/variables/myvars.env
+          version_file="deployment_version.yaml"
           echo "PREV_CHART_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> $GITHUB_ENV
           release="${{ github.event.inputs.release_type }}"
           echo "$release"
