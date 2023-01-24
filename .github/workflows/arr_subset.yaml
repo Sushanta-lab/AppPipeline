@@ -1,0 +1,75 @@
+name: build-docker-push
+on: 
+  #push:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: provide all service to be deployed in stringified format
+        required: true
+        default: "app1,app2,app3,app4"
+  workflow_call:
+    # Map the workflow outputs to job outputs
+    outputs:
+      check_status:
+        description: "The APP VERSION to be deployed"
+        value: ${{ jobs.checkInputs.outputs.check }}
+        
+env:
+  DOCKER_REGISTRY: gcr.io/${{ secrets.GCP_PROJECT }}
+  DOCKER_UN: ${{ secrets.DOCKER_UN }}
+  DOCKER_PW: ${{ secrets.DOCKER_PWD }}
+  
+jobs:
+  checkInputs:
+    runs-on: ubuntu-latest
+    outputs:
+      check: ${{ steps.app_name.outputs.check }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check Input app names exists
+      id: app_name
+      run: |
+        apps="${{ github.event.inputs.name }}"
+        delimiter=,
+        a=(app1 app2 app3 app4 app5 app6 app7 app8 app9 app10)
+        b=($(echo "$apps" | tr $delimiter '\n'))
+        len=${#b[@]}
+        check="ok"
+        for (( i=0; i<$len; i++ )); 
+          do 
+            if printf '%s\0' "${a[@]}" | grep -Fqxz "${b[$i]}"
+            then
+                echo "check=ok" >> $GITHUB_OUTPUT
+            else
+                echo "check=notok" >> $GITHUB_OUTPUT
+                break
+            fi
+          done
+          
+  generateInputPaths:
+    runs-on: ubuntu-latest
+    needs: checkInputs
+    if: ${{ needs.checkInputs.outputs.check }} == "ok"
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Generate matrix with all modules of WhatTheHack repository
+      id: set-matrix
+      run: |
+        apps="${{ github.event.inputs.name }}"        
+        echo '::set-output name=matrix::["$apps"]'
+        #echo '::set-output name=matrix::["spring", "springapp"]'
+
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    needs: generateInputPaths
+    runs-on: ubuntu-latest
+    
+    strategy:
+      #fail-fast: false
+      matrix:
+        path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
