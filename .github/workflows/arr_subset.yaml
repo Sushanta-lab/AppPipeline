@@ -57,7 +57,8 @@ jobs:
     - name: Generate matrix with all modules of WhatTheHack repository
       id: set-matrix
       run: |
-        apps="${{ github.event.inputs.name }}"        
+        apps="${{ github.event.inputs.name }}"
+        echo $apps[*]
         echo '::set-output name=matrix::["$apps[*]"]'
         #echo '::set-output name=matrix::["spring", "springapp"]'
 
