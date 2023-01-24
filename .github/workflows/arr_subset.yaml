@@ -58,8 +58,8 @@ jobs:
       id: set-matrix
       run: |
         apps="${{ github.event.inputs.name }}"
-        echo $apps[*]
-        echo '::set-output name=matrix::["$apps[*]"]'
+        echo $apps
+        echo '::set-output name=matrix::[$apps]'
         #echo '::set-output name=matrix::["spring", "springapp"]'
 
   setup-build-publish-deploy:
