@@ -1,4 +1,4 @@
-name: build-docker-push
+name: arr
 on: 
   #push:
   workflow_dispatch:
