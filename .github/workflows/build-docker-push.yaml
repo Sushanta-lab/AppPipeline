@@ -142,11 +142,8 @@ jobs:
         run: |
           version_file=./.github/variables/myvars.env
           echo "PREV_CHART_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> $GITHUB_ENV
-          echo "-----------"
           release="${{ github.event.inputs.release_type }}"
-          echo "-----------"
           echo "$release"
-          echo "-----------*********"
           if [[ $release == "major" ]]
           then
             rel="0"
@@ -161,9 +158,8 @@ jobs:
           fi
           delimiter=.
           array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
-          echo "-----------"
           array[rel]=$((array[rel]+1))
-          echo "*****${array[rel]}*******"
+          echo "${array[*]}"
           if [ $rel -lt 2 ]; then array[2]=0; fi
           if [ $rel -lt 1 ]; then array[1]=0; fi
           VER="$( IFS=$delimiter ; echo "${array[*]}")"
