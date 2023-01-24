@@ -157,8 +157,9 @@ jobs:
             rel="2"
           fi
           delimiter=.
+          echo "$PREV_CHART_VERSION" | tr $delimiter '\n'
           array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
-          echo ${array[*]}
+          echo $array
           array[rel]=$((array[rel]+1))
           echo "${array[*]}"
           if [ $rel -lt 2 ]; then array[2]=0; fi
