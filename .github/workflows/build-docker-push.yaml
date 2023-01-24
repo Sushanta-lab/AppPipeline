@@ -144,6 +144,7 @@ jobs:
           echo "PREV_CHART_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> $GITHUB_ENV
           release="${{ github.event.inputs.release_type }}"
           echo "$release"
+          echo "$PREV_CHART_VERSION"
           if [[ $release == "major" ]]
           then
             rel="0"
@@ -167,17 +168,17 @@ jobs:
           echo $( IFS=$delimiter ; echo "${array[*]}")
           echo "$(array[*])"
       # Install GCP Dependencies
-      - name: cloud-sdk-setup
-        uses: google-github-actions/setup-gcloud@v0
-        with:
-          project_id: ${{ secrets.GCP_PROJECT }}
-          service_account_key: ${{ secrets.GOOGLE_CRED }}
-          export_default_credentials: true
-      - id: 'get-credentials'
-        uses: 'google-github-actions/get-gke-credentials@v1'
-        with:
-          cluster_name: 'test'
-          location: 'us-central1-c'
+      #- name: cloud-sdk-setup
+      #  uses: google-github-actions/setup-gcloud@v0
+      #  with:
+      #    project_id: ${{ secrets.GCP_PROJECT }}
+      #    service_account_key: ${{ secrets.GOOGLE_CRED }}
+      #    export_default_credentials: true
+      #- id: 'get-credentials'
+      #  uses: 'google-github-actions/get-gke-credentials@v1'
+      #  with:
+      #    cluster_name: 'test'
+      #    location: 'us-central1-c'
       # Configure runner with GKE
       # Install chart in DEV Env
       - name: upgrade chart spring
