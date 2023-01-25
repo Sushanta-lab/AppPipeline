@@ -65,6 +65,7 @@ jobs:
                 echo "check=ok" >> $GITHUB_ENV
             else
                 echo "check=notok" >> $GITHUB_OUTPUT
+                echo "check=notok" >> $GITHUB_ENV
                 echo "${b[$i]} wrongly entered"
                 break
             fi           
