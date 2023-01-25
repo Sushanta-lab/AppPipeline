@@ -71,7 +71,7 @@ jobs:
           done
     - name: Generate matrix with all modules of WhatTheHack repository
       id: set-matrix
-      if: ${ env.check  == "ok" }
+      if: env.check  == "ok"
       run: |
         apps="${{ github.event.inputs.name }}"
         echo $apps
