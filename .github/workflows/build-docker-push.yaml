@@ -53,7 +53,7 @@ jobs:
       run: |
         apps="${{ github.event.inputs.name }}"
         delimiter=,
-        a=("app1" "app2" "app3" "app4" "app5" "app6" "app7" "app8" "app9" "app10")
+        a=("spring" "app1" "app2" "app3" "app4" "app5" "app6" "app7" "app8" "app9" "app10")
         b=($(echo "$apps" | tr $delimiter '\n'))
         len=${#b[@]}
         check="ok"
