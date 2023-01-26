@@ -125,7 +125,8 @@ jobs:
         working-directory: ./Dockerfiles/spring
         run: |
           sed -i -e "s|DOCKER_REGISTRY|$DOCKER_REGISTRY|g" Dockerfile
-          echo "${pwd}"
+          dir=${PWD}
+          echo $dir
       - name: Replace Values springapp
         working-directory: ./Dockerfiles/springapp
         run: |
