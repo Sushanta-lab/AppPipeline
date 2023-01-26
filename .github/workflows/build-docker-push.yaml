@@ -226,6 +226,8 @@ jobs:
             sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
             sed -i -e "s|CHART_VERSION|$CHART_VERSION|g" Chart.yaml
             sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
+            helm lint .
+            helm package .
             helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
           fi
           
