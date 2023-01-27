@@ -201,17 +201,17 @@ jobs:
           NEW_VERSION=$( IFS=$delimiter ; echo "${array[*]}")
           echo ${NEW_VERSION}
       # Install GCP Dependencies
-      #- name: cloud-sdk-setup
-      #  uses: google-github-actions/setup-gcloud@v0
-      #  with:
-      #    project_id: ${{ secrets.GCP_PROJECT }}
-      #    service_account_key: ${{ secrets.GOOGLE_CRED }}
-      #    export_default_credentials: true
-      #- id: 'get-credentials'
-      #  uses: 'google-github-actions/get-gke-credentials@v1'
-      #  with:
-      #    cluster_name: 'test'
-      #    location: 'us-central1-c'
+      - name: cloud-sdk-setup
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GOOGLE_CRED }}
+          export_default_credentials: true
+      - id: 'get-credentials'
+        uses: 'google-github-actions/get-gke-credentials@v1'
+        with:
+          cluster_name: 'test'
+          location: 'us-central1-c'
       # Configure runner with GKE
       # Install chart in DEV Env
       - name: upgrade chart spring
@@ -223,8 +223,8 @@ jobs:
             cd spring/
             echo ${{ needs.setup-build-publish-deploy.outputs.spring_version }}
             #APP_VERSION=${{ needs.setup-build-publish-deploy.outputs.spring_version }}
-            APP_VERSION=1.0.0
-            CHART_VERSION=1.0.0
+            APP_VERSION=1.0.1
+            CHART_VERSION=1.0.1
             sed -i -e "s|tag: VERSION|tag: $APP_VERSION|g" values-dev.yaml
             sed -i -e "s|NAMES|spring|g" Chart.yaml
             sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
