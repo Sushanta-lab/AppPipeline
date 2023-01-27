@@ -119,7 +119,7 @@ jobs:
       # Login to GCR
       - name: Login to GCR
         run: |-
-          ##docker login $DOCKER_REGISTRY --username $DOCKER_UN --password $DOCKER_PW
+          docker login $DOCKER_REGISTRY --username $DOCKER_UN --password $DOCKER_PW
       # Replace value in Dockerfile
       - name: Replace Values spring
         working-directory: ./Dockerfiles/spring
@@ -147,13 +147,17 @@ jobs:
             echo "springapp_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
           fi
           
-          ##docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
+          docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION --file ./${{ matrix.path }}/Dockerfile .
       # Push the Docker image to Google Container Registry
       - name: Publish
         run: |-
           IMAGE_VERSION=${${{ matrix.path }}_version}
-          ##docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION
-          
+          docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMAGE_VERSION
+      - name: Test
+        working-directory: ./charts/spring
+        run: |-
+          helm lint .
+          helm package
 
   deploy-app-on-GKE-DEV:
     name: Deploy on Dev
