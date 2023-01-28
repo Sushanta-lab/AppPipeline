@@ -1,1 +1,209 @@
+name: build-docker-push
+on: 
+  #push:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: provide all service to be deployed in stringified format
+        required: true
+        default: '"spring","app1","app2","app3","app4"'
+        
+  workflow_call:
+    # Map the workflow outputs to job outputs
+    outputs:
+      matrix:
+        description: "App_NAME"
+        value: ${{ jobs.generateInputPaths.outputs.matrix }}
+      commit_id:
+        description: "CommitID used as ImageTag"
+        value: ${{ jobs.setup-build-publish-deploy.outputs.commit_id }}
+#on:
+#  push:
 
+env:
+  DOCKER_REGISTRY: gcr.io/${{ secrets.GCP_PROJECT }}
+  DOCKER_UN: ${{ secrets.DOCKER_UN }}
+  DOCKER_PW: ${{ secrets.DOCKER_PWD }}
+  
+jobs:
+  #checkInputs:
+  generateInputPaths:
+    runs-on: ubuntu-latest
+    outputs:
+      check: ${{ steps.app_name.outputs.check }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check Input app names exists
+      id: app_name
+      run: |
+        apps="${{ github.event.inputs.name }}"
+        delimiter=,
+        a=("spring" "app1" "app2" "app3" "app4" "app5" "app6" "app7" "app8" "app9" "app10")
+        b=($(echo "$apps" | tr $delimiter '\n'))
+        len=${#b[@]}
+        check="ok"
+        for (( i=0; i<$len; i++ )); 
+          do 
+            if printf '%s\0' "${a[@]}" | grep -Fqxz "${b[$i]}"
+            then
+                echo "check=ok" >> $GITHUB_OUTPUT
+                echo "check=ok" >> $GITHUB_ENV
+            else
+                echo "check=notok" >> $GITHUB_OUTPUT
+                echo "check=notok" >> $GITHUB_ENV
+                echo "${b[$i]} wrongly entered"
+                break
+            fi           
+          done
+    - name: Generate matrix with all modules of WhatTheHack repository
+      id: set-matrix
+      if: env.check  == 'ok'
+      run: |
+        apps="${{ github.event.inputs.name }}"
+        echo $apps
+        echo '::set-output name=matrix::${{format('[{0}]',github.event.inputs.name)}}'  
+ 
+ 
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    needs: generateInputPaths
+    runs-on: ubuntu-latest
+    
+    strategy:
+      #fail-fast: false
+      matrix:
+        path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
+    outputs:
+      commit_id: ${{ steps.git-id.outputs.commit_id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # Login to GCR
+      - name: Login to GCR
+        run: |-
+          docker login $DOCKER_REGISTRY --username $DOCKER_UN --password $DOCKER_PW
+      # Replace value in Dockerfile
+      - name: Replace Values spring
+        if:  ${{ matrix.path }} == "spring"
+        working-directory: ./Dockerfiles/spring
+        run: |
+          sed -i -e "s|DOCKER_REGISTRY|$DOCKER_REGISTRY|g" Dockerfile
+          dir=${PWD}
+          echo $dir
+      - name: Replace Values springapp
+        if:  ${{ matrix.path }} == "springapp"
+        working-directory: ./Dockerfiles/springapp
+        run: |
+          sed -i -e "s|DOCKER_REGISTRY|$DOCKER_REGISTRY|g" Dockerfile
+      # Build Docker Image
+      - name: Build
+        id: git-id
+        working-directory: ./Dockerfiles
+        run: |-
+          GIT_COMMIT_ID=$(git rev-parse --short HEAD)
+          echo "commit_id=${GIT_COMMIT_ID}" >> $GITHUB_OUTPUT
+          
+          docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$GIT_COMMIT_ID --file ./${{ matrix.path }}/Dockerfile .
+      # Push the Docker image to Google Container Registry
+      - name: Publish
+        run: |-
+          IMAGE_VERSION=${${{ matrix.path }}_version}
+          docker push $DOCKER_REGISTRY/${{ matrix.path }}:$GIT_COMMIT_ID
+      - name: Prepare Helm Chart for DEV
+        run: |-
+          cd charts/${{ matrix.path }}
+          IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
+          version_file="deployment_version.yaml"
+          APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})"
+          sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-dev.yaml
+          sed -i -e "s|NAMES|spring|g" Chart.yaml
+          sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
+      - name: Test
+        working-directory: ./charts
+        run: |-
+          cd ${{ matrix.path }}
+          helm lint .
+          helm package
+          
+  deploy-app-on-GKE-DEV:
+    name: Deploy on Dev
+    needs: ['generateInputPaths', 'setup-build-publish-deploy']
+    #environment: dev
+    runs-on: ubuntu-latest
+    strategy:
+      #fail-fast: false
+      matrix:
+        path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # Install GCP Dependencies
+      - name: cloud-sdk-setup
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GOOGLE_CRED }}
+          export_default_credentials: true
+      - id: 'get-credentials'
+        uses: 'google-github-actions/get-gke-credentials@v1'
+        with:
+          cluster_name: 'test'
+          location: 'us-central1-c'
+      # Configure runner with GKE
+      # Install chart in DEV Env
+      - name: upgrade chart spring
+        run: |
+          cd charts/${{ matrix.path }}
+          helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
+          version_file="deployment_version.yaml"
+          APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})"
+          echo "deploy on dev $APP_VERSION"
+      - name: Prepare Helm Chart for UAT
+        run: |-
+          cd charts/${{ matrix.path }}
+          IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
+          version_file="deployment_version.yaml"
+          APP_VERSION=$(yq -r .${{ matrix.path }}_uat.version ${version_file})"
+          sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-uat.yaml
+          sed -i -e "s|version: *|version: $APP_VERSION|g" Chart.yaml
+          sed -i -e "s|appVersion: *|appVersion: $APP_VERSION|g" Chart.yaml
+          sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-uat.yaml
+          cat Chart.yaml
+
+
+  deploy-app-on-GKE-UAT:
+    name: Deploy on UAT
+    needs: ['generateInputPaths', 'setup-build-publish-deploy', 'deploy-app-on-GKE-DEV']
+    environment: uat
+    runs-on: ubuntu-latest
+    strategy:
+      #fail-fast: false
+      matrix:
+        path: ${{fromJson(needs.generateInputPaths.outputs.matrix)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # Install GCP Dependencies
+      - name: cloud-sdk-setup
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          service_account_key: ${{ secrets.GOOGLE_CRED }}
+          export_default_credentials: true
+      - id: 'get-credentials'
+        uses: 'google-github-actions/get-gke-credentials@v1'
+        with:
+          cluster_name: 'test-uat'
+          location: 'us-central1-c'
+      # Configure runner with GKE
+      # Install chart in UAT Env
+      - name: upgrade chart spring
+        run: |
+          cd charts/${{ matrix.path }}
+          helm upgrade -i spring -f ./values-uat.yaml . --namespace uat
+          version_file="deployment_version.yaml"
+          APP_VERSION=$(yq -r .${{ matrix.path }}_uat.version ${version_file})"
+          echo "deploy on uat $APP_VERSION"
