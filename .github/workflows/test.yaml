@@ -108,12 +108,12 @@ jobs:
       # Push the Docker image to Google Container Registry
       - name: Publish
         run: |-
-          IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
+          IMG_VERSION=$(git rev-parse --short HEAD)
           docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMG_VERSION
       - name: Prepare Helm Chart for DEV
         run: |-
           cd charts/${{ matrix.path }}
-          IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
+          IMG_VERSION=$(git rev-parse --short HEAD)
           version_file="deployment_version.yaml"
           APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})"
           sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-dev.yaml
