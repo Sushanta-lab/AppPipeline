@@ -189,8 +189,8 @@ jobs:
           IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
           cd charts/${{ matrix.path }}
           sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-uat.yaml
-          sed -i -e "s|version: *|version: $APP_VERSION|g" Chart.yaml
-          sed -i -e "s|appVersion: *|appVersion: $APP_VERSION|g" Chart.yaml
+          sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
           sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-uat.yaml
           cat Chart.yaml
           helm upgrade -i spring -f ./values-uat.yaml . --namespace uat
