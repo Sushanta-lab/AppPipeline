@@ -111,30 +111,7 @@ jobs:
         run: |-
           IMG_VERSION=${commit_id}
           docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMG_VERSION
-      - name: Prepare Helm Chart for DEV
-        run: |-
-          IMG_VERSION=${commit_id}
-          version_file="deployment_version.yaml"
-          APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
-          cd charts/${{ matrix.path }}
-          sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-dev.yaml
-          sed -i -e "s|NAMES|spring|g" Chart.yaml
-          sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
-          sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
-          sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
-      - name: Test
-        run: |-
-          version_file="deployment_version.yaml"
-          APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
-          cd charts/${{ matrix.path }}/
-          FILE_PATH=${PWD}
-          helm lint .
-          helm package ${FILE_PATH}
-          mkdir deploy/
-          mv ${{ matrix.path }}-$APP_VERSION.tgz deploy/
-          ls -l deploy/
-          
-          
+               
   deploy-app-on-GKE-DEV:
     name: Deploy on Dev
     needs: ['generateInputPaths', 'setup-build-publish-deploy']
@@ -160,27 +137,24 @@ jobs:
           cluster_name: 'test'
           location: 'us-central1-c'
       # Configure runner with GKE
+      - name: Prepare Helm Chart for DEV
+        run: |-
+          
       # Install chart in DEV Env
       - name: upgrade chart spring
         run: |
           version_file="deployment_version.yaml"
           APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
-          cd charts/${{ matrix.path }}/deploy
-          tar -xvf ${{ matrix.path }}-$APP_VERSION.tgz
-          ls -l deploy/
-          helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
-          echo "deploy on dev $APP_VERSION"
-      - name: Prepare Helm Chart for UAT
-        run: |-
-          version_file="deployment_version.yaml"
-          APP_VERSION=$(yq -r .${{ matrix.path }}_uat.version ${version_file})
           IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
           cd charts/${{ matrix.path }}
-          sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-uat.yaml
-          sed -i -e "s|version: *|version: $APP_VERSION|g" Chart.yaml
-          sed -i -e "s|appVersion: *|appVersion: $APP_VERSION|g" Chart.yaml
-          sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-uat.yaml
-          cat Chart.yaml
+          sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-dev.yaml
+          sed -i -e "s|NAMES|spring|g" Chart.yaml
+          sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
+          sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-dev.yaml
+          helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
+          echo "deploy on dev $APP_VERSION"
+       
 
   deploy-app-on-GKE-UAT:
     name: Deploy on UAT
@@ -212,6 +186,12 @@ jobs:
         run: |
           version_file="deployment_version.yaml"
           APP_VERSION=$(yq -r .${{ matrix.path }}_uat.version ${version_file})
+          IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
           cd charts/${{ matrix.path }}
+          sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-uat.yaml
+          sed -i -e "s|version: *|version: $APP_VERSION|g" Chart.yaml
+          sed -i -e "s|appVersion: *|appVersion: $APP_VERSION|g" Chart.yaml
+          sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-uat.yaml
+          cat Chart.yaml
           helm upgrade -i spring -f ./values-uat.yaml . --namespace uat
           echo "deploy on uat $APP_VERSION"
