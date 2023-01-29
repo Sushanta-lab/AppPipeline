@@ -126,9 +126,9 @@ jobs:
         working-directory: ./charts
         run: |-
           cd ${{ matrix.path }}/
-          echo "${PWD}"
+          FILE_PATH=${PWD}
           helm lint .
-          helm package
+          helm package ${FILE_PATH}
           
   deploy-app-on-GKE-DEV:
     name: Deploy on Dev
@@ -174,7 +174,6 @@ jobs:
           sed -i -e "s|appVersion: *|appVersion: $APP_VERSION|g" Chart.yaml
           sed -i -e "s|repository: IMAGE_NAME|repository: $DOCKER_REGISTRY/spring|g" values-uat.yaml
           cat Chart.yaml
-
 
   deploy-app-on-GKE-UAT:
     name: Deploy on UAT
