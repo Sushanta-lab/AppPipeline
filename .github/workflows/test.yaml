@@ -108,8 +108,8 @@ jobs:
       # Push the Docker image to Google Container Registry
       - name: Publish
         run: |-
-          IMAGE_VERSION=${${{ matrix.path }}_version}
-          docker push $DOCKER_REGISTRY/${{ matrix.path }}:$GIT_COMMIT_ID
+          IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
+          docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMG_VERSION
       - name: Prepare Helm Chart for DEV
         run: |-
           cd charts/${{ matrix.path }}
