@@ -113,10 +113,10 @@ jobs:
           docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMG_VERSION
       - name: Prepare Helm Chart for DEV
         run: |-
-          cd charts/${{ matrix.path }}
           IMG_VERSION=${commit_id}
           version_file="deployment_version.yaml"
           APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
+          cd charts/${{ matrix.path }}
           sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-dev.yaml
           sed -i -e "s|NAMES|spring|g" Chart.yaml
           sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
@@ -157,17 +157,17 @@ jobs:
       # Install chart in DEV Env
       - name: upgrade chart spring
         run: |
-          cd charts/${{ matrix.path }}
-          helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
           version_file="deployment_version.yaml"
           APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})"
+          cd charts/${{ matrix.path }}
+          helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
           echo "deploy on dev $APP_VERSION"
       - name: Prepare Helm Chart for UAT
         run: |-
-          cd charts/${{ matrix.path }}
-          IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
           version_file="deployment_version.yaml"
-          APP_VERSION=$(yq -r .${{ matrix.path }}_uat.version ${version_file})"
+          APP_VERSION=$(yq -r .${{ matrix.path }}_uat.version ${version_file})
+          IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
+          cd charts/${{ matrix.path }}
           sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-uat.yaml
           sed -i -e "s|version: *|version: $APP_VERSION|g" Chart.yaml
           sed -i -e "s|appVersion: *|appVersion: $APP_VERSION|g" Chart.yaml
@@ -203,8 +203,8 @@ jobs:
       # Install chart in UAT Env
       - name: upgrade chart spring
         run: |
+          version_file="deployment_version.yaml"
+          APP_VERSION=$(yq -r .${{ matrix.path }}_uat.version ${version_file})
           cd charts/${{ matrix.path }}
           helm upgrade -i spring -f ./values-uat.yaml . --namespace uat
-          version_file="deployment_version.yaml"
-          APP_VERSION=$(yq -r .${{ matrix.path }}_uat.version ${version_file})"
           echo "deploy on uat $APP_VERSION"
