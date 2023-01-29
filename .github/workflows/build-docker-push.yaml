@@ -111,7 +111,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Tags
-        working-directory: ./.github/workflows
+        working-directory: ./.github/variables
         shell: bash
         run: |
           version_file="deployment_version.yaml"
