@@ -103,19 +103,20 @@ jobs:
         run: |-
           GIT_COMMIT_ID=$(git rev-parse --short HEAD)
           echo "commit_id=${GIT_COMMIT_ID}" >> $GITHUB_OUTPUT
+          echo "commit_id=${GIT_COMMIT_ID}" >> $GITHUB_ENV
           
           docker build -t $DOCKER_REGISTRY/${{ matrix.path }}:$GIT_COMMIT_ID --file ./${{ matrix.path }}/Dockerfile .
       # Push the Docker image to Google Container Registry
       - name: Publish
         run: |-
-          IMG_VERSION=$(git rev-parse --short HEAD)
+          IMG_VERSION=${commit_id}
           docker push $DOCKER_REGISTRY/${{ matrix.path }}:$IMG_VERSION
       - name: Prepare Helm Chart for DEV
         run: |-
           cd charts/${{ matrix.path }}
-          IMG_VERSION=$(git rev-parse --short HEAD)
+          IMG_VERSION=${commit_id}
           version_file="deployment_version.yaml"
-          APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})"
+          APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
           sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-dev.yaml
           sed -i -e "s|NAMES|spring|g" Chart.yaml
           sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
