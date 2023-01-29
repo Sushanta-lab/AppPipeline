@@ -125,7 +125,8 @@ jobs:
       - name: Test
         working-directory: ./charts
         run: |-
-          cd ${{ matrix.path }}
+          cd ${{ matrix.path }}/
+          echo "${PWD}"
           helm lint .
           helm package
           
