@@ -56,7 +56,7 @@ jobs:
         check="ok"
         for (( i=0; i<$len; i++ )); 
           do 
-            if [[ ${{ github.event.inputs.spring }} == 'true' || ${{ github.event.inputs.springApp }} == 'true' || ${{ github.event.inputs.app1 }} == 'true' ${{ github.event.inputs.app }} == 'true']];
+            if [[ ${{ github.event.inputs.spring }} == 'true' || ${{ github.event.inputs.springApp }} == 'true' || ${{ github.event.inputs.app1 }} == 'true' || ${{ github.event.inputs.app }} == 'true' ]];
             then
               echo ${array[i]}
               b+=(${array[i]})
