@@ -115,7 +115,7 @@ jobs:
         run: |-
           IMG_VERSION=${commit_id}
           version_file="deployment_version.yaml"
-          APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
+          echo "APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})" >> GITHUB_ENV
           cd charts/${{ matrix.path }}
           sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-dev.yaml
           sed -i -e "s|NAMES|spring|g" Chart.yaml
@@ -125,8 +125,6 @@ jobs:
       - name: Test
         working-directory: ./charts
         run: |-
-          version_file="deployment_version.yaml"
-          APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
           cd ${{ matrix.path }}/
           FILE_PATH=${PWD}
           helm lint .
