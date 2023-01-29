@@ -149,8 +149,8 @@ jobs:
           cd charts/${{ matrix.path }}
           sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-dev.yaml
           sed -i -e "s|NAMES|spring|g" Chart.yaml
-          sed -i 's#appVersion: .*#appVersion: $APP_VERSION#g' Chart.yaml
-          sed -i 's#version: .*#version: $APP_VERSION#g' Chart.yaml
+          sed -i -e "s|appVersion: .*|appVersion: $APP_VERSION|g" Chart.yaml
+          sed -i -e "s|version: .*|version: $APP_VERSION|g" Chart.yaml
           cat Chart.yaml
           #sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
           #sed -i -e "s|CHART_VERSION|$APP_VERSION|g" Chart.yaml
