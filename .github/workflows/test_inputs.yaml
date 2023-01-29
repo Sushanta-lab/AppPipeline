@@ -1,4 +1,4 @@
-name: build-docker-push
+name: test inputs
 on: 
   #push:
   workflow_dispatch:
