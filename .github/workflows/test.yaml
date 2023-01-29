@@ -125,10 +125,16 @@ jobs:
       - name: Test
         working-directory: ./charts
         run: |-
+          version_file="deployment_version.yaml"
+          APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
           cd ${{ matrix.path }}/
           FILE_PATH=${PWD}
           helm lint .
           helm package ${FILE_PATH}
+          mkdir deploy/
+          mv ${{ matrix.path }}-$APP_VERSION.tgz deploy/
+          ls -l deploy/
+          
           
   deploy-app-on-GKE-DEV:
     name: Deploy on Dev
@@ -160,7 +166,9 @@ jobs:
         run: |
           version_file="deployment_version.yaml"
           APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
-          cd charts/${{ matrix.path }}
+          cd charts/${{ matrix.path }}/deploy
+          tar -xvf ${{ matrix.path }}-$APP_VERSION.tgz
+          ls -l deploy/
           helm upgrade -i spring -f ./values-dev.yaml . --namespace dev
           echo "deploy on dev $APP_VERSION"
       - name: Prepare Helm Chart for UAT
