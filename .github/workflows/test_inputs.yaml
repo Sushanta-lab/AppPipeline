@@ -23,6 +23,136 @@ on:
         required: true
         type: boolean
         default: 'false'
+      app3:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app4:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app5:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app6:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app7:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app8:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app9:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app10:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app11:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app12:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app13:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app14:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app15:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app16:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app17:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app18:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app19:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app20:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app21:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app22:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app23:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app24:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app25:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app26:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'
+      app27:
+        description: app1
+        required: true
+        type: boolean
+        default: 'false'
+      app28:
+        description: app2
+        required: true
+        type: boolean
+        default: 'false'        
         
   workflow_call:
     # Map the workflow outputs to job outputs
