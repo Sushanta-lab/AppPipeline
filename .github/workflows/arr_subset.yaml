@@ -40,14 +40,14 @@ jobs:
             if printf '%s\0' "${a[@]}" | grep -Fqxz "${b[$i]}"
             then
                 echo "check=ok" >> $GITHUB_OUTPUT
-            elseif [[ ${b[$i]} == "All" && $len == 1 ]]
-                then
-                  echo "check=ok" >> $GITHUB_OUTPUT
-                else
-                  echo "check=notok" >> $GITHUB_OUTPUT
-                  echo "${b[$i]} wrongly entered"
-                  break
-                fi
+            elif [[ ${b[$i]} == "All" && $len == 1 ]]
+            then
+                echo "check=ok" >> $GITHUB_OUTPUT
+            else
+                echo "check=notok" >> $GITHUB_OUTPUT
+                echo "${b[$i]} wrongly entered"
+                break
+            
             fi           
           done
           
