@@ -6,7 +6,7 @@ on:
       name:
         description: provide all service to be deployed in stringified format
         required: true
-        default: '"spring","app1","app2","app3","app4"'
+        default: '"spring"'
         
   workflow_call:
     # Map the workflow outputs to job outputs
@@ -39,7 +39,8 @@ jobs:
       run: |
         apps="${{ github.event.inputs.name }}"
         delimiter=,
-        a=("spring" "app1" "app2" "app3" "app4" "app5" "app6" "app7" "app8" "app9" "app10" "app11" "app12" "app13" "app14" "app15" "app16" "app17" "app18" "app19" "app20")
+        #a=("spring" "app1" "app2" "app3" "app4" "app5" "app6" "app7" "app8" "app9" "app10" "app11" "app12" "app13" "app14" "app15" "app16" "app17" "app18" "app19" "app20")
+        a=("spring" "springapp")
         b=($(echo "$apps" | tr $delimiter '\n'))
         len=${#b[@]}
         check="ok"
@@ -47,10 +48,13 @@ jobs:
           do 
             if printf '%s\0' "${a[@]}" | grep -Fqxz "${b[$i]}"
             then
-                echo "check=ok" >> $GITHUB_OUTPUT
+                #echo "check=ok" >> $GITHUB_OUTPUT
+                echo "check=ok" >> $GITHUB_ENV
+            elif [[ ${b[$i]} == "All" && $len == 1 ]]
+            then
                 echo "check=ok" >> $GITHUB_ENV
             else
-                echo "check=notok" >> $GITHUB_OUTPUT
+                #echo "check=notok" >> $GITHUB_OUTPUT
                 echo "check=notok" >> $GITHUB_ENV
                 echo "${b[$i]} wrongly entered"
                 break
@@ -62,7 +66,12 @@ jobs:
       run: |
         apps="${{ github.event.inputs.name }}"
         echo $apps
-        echo '::set-output name=matrix::${{format('[{0}]',github.event.inputs.name)}}'  
+        if [[ ${{ github.event.inputs.name }} == "All" ]]
+        then 
+          echo '::set-output name=matrix::["spring", "springapp"]'
+        else
+          echo '::set-output name=matrix::${{format('[{0}]',github.event.inputs.name)}}'
+        fi
  
  
   setup-build-publish-deploy:
@@ -136,6 +145,12 @@ jobs:
         with:
           cluster_name: 'test'
           location: 'us-central1-c'
+      # Get current version of App 
+      - name: Get current Helm Chart version(DEV)
+        run: |-
+      # Get new version of App 
+      - name: New Helm Chart version(DEV)
+        run: |-
       # Configure runner with GKE
       - name: Prepare Helm Chart for DEV
         run: |-
