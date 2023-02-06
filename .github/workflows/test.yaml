@@ -158,7 +158,7 @@ jobs:
         run: |-
           APP_NAME=${{ matrix.path }}
           echo "PREV_CHART_VERSION=$(helm ls -n dev | awk '{print $1,$10}' | grep $APP_NAME | awk '{print $2}')" >> $GITHUB_ENV
-          
+          echo "---------${PREV_CHART_VERSION}----------"
       # Get new version of App 
       - name: New Helm Chart version(DEV)
         run: |-
@@ -166,6 +166,7 @@ jobs:
           if [[ $PREV_CHART_VERSION != " " ]]
           then
             release="${{ github.event.inputs.release_type }}"
+            echo "---------INSIDE 1ST IF----------"
             echo "$release"
             if [[ $release == "major" ]]
             then
@@ -187,6 +188,7 @@ jobs:
             echo "NEW_VERSION=$( IFS=$delimiter ; echo "${array[*]}")" >> $GITHUB_ENV
           else
             echo "NEW_VERSION=1.0.0" >> $GITHUB_ENV
+            echo "---------INSIDE else----------"
           fi
           echo "${NEW_VERSION}"
       # Configure runner with GKE
