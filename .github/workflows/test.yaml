@@ -7,6 +7,14 @@ on:
         description: provide all service to be deployed in stringified format
         required: true
         default: '"spring"'
+      release_type:
+        type: choice
+        description: Select major,minor or patch
+        options:
+        - major
+        - minor
+        - patch
+        default: patch
         
   workflow_call:
     # Map the workflow outputs to job outputs
@@ -155,6 +163,7 @@ jobs:
       - name: New Helm Chart version(DEV)
         run: |-
           echo ${PREV_CHART_VERSION}
+          release="${{ github.event.inputs.release_type }}"
           echo "$release"
           if [[ $release == "major" ]]
           then
