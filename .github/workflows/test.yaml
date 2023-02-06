@@ -148,6 +148,8 @@ jobs:
       # Get current version of App 
       - name: Get current Helm Chart version(DEV)
         run: |-
+          APP_NAME=${{ matrix.path }}
+          helm ls -n dev | awk '{print $1,$10}' | grep $APP_NAME | awk '{print $2}'
       # Get new version of App 
       - name: New Helm Chart version(DEV)
         run: |-
