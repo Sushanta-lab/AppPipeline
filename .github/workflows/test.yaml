@@ -163,26 +163,31 @@ jobs:
       - name: New Helm Chart version(DEV)
         run: |-
           echo ${PREV_CHART_VERSION}
-          release="${{ github.event.inputs.release_type }}"
-          echo "$release"
-          if [[ $release == "major" ]]
+          if [[ $PREV_CHART_VERSION != " " ]]
           then
-            rel="0"
+            release="${{ github.event.inputs.release_type }}"
+            echo "$release"
+            if [[ $release == "major" ]]
+            then
+              rel="0"
+            fi
+            if [[ "$release" == "minor" ]]
+            then
+              rel="1"
+            fi
+            if [[ $release == "patch" ]]
+            then
+              rel="2"
+            fi
+            delimiter=.
+            array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
+            array[rel]=$((array[rel]+1))
+            if [ $rel -lt 2 ]; then array[2]=0; fi
+            if [ $rel -lt 1 ]; then array[1]=0; fi
+            echo "NEW_VERSION=$( IFS=$delimiter ; echo "${array[*]}")" >> $GITHUB_ENV
+          else
+            echo "NEW_VERSION=1.0.0" >> $GITHUB_ENV
           fi
-          if [[ "$release" == "minor" ]]
-          then
-            rel="1"
-          fi
-          if [[ $release == "patch" ]]
-          then
-            rel="2"
-          fi
-          delimiter=.
-          array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
-          array[rel]=$((array[rel]+1))
-          if [ $rel -lt 2 ]; then array[2]=0; fi
-          if [ $rel -lt 1 ]; then array[1]=0; fi
-          echo "NEW_VERSION=$( IFS=$delimiter ; echo "${array[*]}")" >> $GITHUB_ENV
           echo "${NEW_VERSION}"
       # Configure runner with GKE
       - name: Prepare Helm Chart for DEV
