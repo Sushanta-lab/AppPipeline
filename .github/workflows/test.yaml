@@ -149,10 +149,32 @@ jobs:
       - name: Get current Helm Chart version(DEV)
         run: |-
           APP_NAME=${{ matrix.path }}
-          helm ls -n dev | awk '{print $1,$10}' | grep $APP_NAME | awk '{print $2}'
+          echo "PREV_CHART_VERSION=$(helm ls -n dev | awk '{print $1,$10}' | grep $APP_NAME | awk '{print $2}')" >> $GITHUB_ENV
+          
       # Get new version of App 
       - name: New Helm Chart version(DEV)
         run: |-
+          echo ${PREV_CHART_VERSION}
+          echo "$release"
+          if [[ $release == "major" ]]
+          then
+            rel="0"
+          fi
+          if [[ "$release" == "minor" ]]
+          then
+            rel="1"
+          fi
+          if [[ $release == "patch" ]]
+          then
+            rel="2"
+          fi
+          delimiter=.
+          array=($(echo "$PREV_CHART_VERSION" | tr $delimiter '\n'))
+          array[rel]=$((array[rel]+1))
+          if [ $rel -lt 2 ]; then array[2]=0; fi
+          if [ $rel -lt 1 ]; then array[1]=0; fi
+          echo "NEW_VERSION=$( IFS=$delimiter ; echo "${array[*]}")" >> $GITHUB_ENV
+          echo "${NEW_VERSION}"
       # Configure runner with GKE
       - name: Prepare Helm Chart for DEV
         run: |-
@@ -160,13 +182,14 @@ jobs:
       # Install chart in DEV Env
       - name: upgrade chart spring
         run: |
-          version_file="deployment_version.yaml"
-          APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
+          #version_file="deployment_version.yaml"
+          #APP_VERSION=$(yq -r .${{ matrix.path }}_dev.version ${version_file})
+          echo "${NEW_VERSION}"
           IMG_VERSION=${{ needs.setup-build-publish-deploy.outputs.commit_id }}
           cd charts/${{ matrix.path }}
           sed -i -e "s|tag: VERSION|tag: $IMG_VERSION|g" values-dev.yaml
           sed -i -e "s|NAMES|spring|g" Chart.yaml
-          sed -i -e "s|appVersion: .*|appVersion: $APP_VERSION|g" Chart.yaml
+          sed -i -e "s|appVersion: .*|appVersion: $NEW_VERSION|g" Chart.yaml
           sed -i -e "s|version: .*|version: $APP_VERSION|g" Chart.yaml
           cat Chart.yaml
           #sed -i -e "s|APP_VERSION|$APP_VERSION|g" Chart.yaml
