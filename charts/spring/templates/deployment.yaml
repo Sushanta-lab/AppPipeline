@@ -19,7 +19,7 @@ spec:
       volumes:
       - name: configmap
         configMap:
-          name: common-configmaps
+          name: common-configmap
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
